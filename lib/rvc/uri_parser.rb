@@ -43,6 +43,7 @@ class URIParser
 
   # Loosely parse a URI. This is more forgiving than a standard URI parser.
   def self.parse str
+    str = URI.encode(str)
     match = URI_REGEX.match str
     Util.err "invalid URI" unless match
 

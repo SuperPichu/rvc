@@ -48,13 +48,16 @@ def check_installed
 end
 
 def find_vmrc arch, version
-  path = if version == '3.0.0'
-    basename = ON_WINDOWS ? 'vmware-vmrc.exe' : 'vmware-vmrc'
-    File.join(local_vmrc_dir(arch), version, 'plugins', basename)
-  else
-    fail "VMRC5 not yet supported on win32" if ON_WINDOWS
-    File.join(local_vmrc_dir(arch), version, 'vmware-vmrc-5.0', 'run.sh')
-  end
+  #path = if version == '3.0.0'
+  #  basename = ON_WINDOWS ? 'vmware-vmrc.exe' : 'vmware-vmrc'
+  #  File.join(local_vmrc_dir(arch), version, 'plugins', basename)
+  #else
+  #  fail "VMRC5 not yet supported on win32" if ON_WINDOWS
+  #  File.join(local_vmrc_dir(arch), version, 'vmware-vmrc-5.0', 'run.sh')
+  #end
+  # Override path for new vmrc
+  path = `which vmrc`.strip
+  puts "Found vmrc at " + path
   File.exists?(path) && path
 end
 
@@ -88,6 +91,7 @@ def view vms, opts
   vim_version = conn.serviceContent.about.version
   vmrc_version = choose_vmrc_version vim_version
   unless vmrc = find_vmrc(ARCH, vmrc_version)
+    puts find_vmrc(ARCH, vmrc_version)
     if opts[:install]
       install
       vmrc = find_vmrc(ARCH, vmrc_version)
@@ -106,9 +110,7 @@ end
 
 if ON_WINDOWS
   def spawn_vmrc vmrc, moref, host, ticket
-    err "Ruby 1.9 required" unless Process.respond_to? :spawn
-    Process.spawn vmrc, '-h', host, '-p', ticket, '-M', moref,
-                  :err => "#{ENV['HOME']||'.'}/.rvc-vmrc.log"
+    err "Windows not currently supported"
   end
 else
   def spawn_vmrc vmrc, moref, host, ticket
@@ -119,7 +121,8 @@ else
       $stderr.puts "Using VMRC #{vmrc}"
       $stderr.flush
       Process.setpgrp
-      exec vmrc, '-M', moref, '-h', host, '-p', ticket
+      #exec vmrc, '-M', moref, '-H', host, '-U', user, '-P', password
+      exec vmrc, '-M', moref, '-H', host
     end
   end
 end
